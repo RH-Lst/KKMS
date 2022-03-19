@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="
+    http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/context
+    http://www.springframework.org/schema/context/spring-context.xsd
+    http://www.springframework.org/schema/mvc
+    http://www.springframework.org/schema/mvc/spring-mvc.xsd">
+
+    <!--扫描控制器，哪个类头上有@Controller，那么这个类就可以接收请求 -->
+    <context:component-scan base-package="com.RH.controller"/>
+    <!-- 注册注解:@ResponseBody @RequestMapping @Controller -->
+    <mvc:annotation-driven/>
+    <!-- 过滤静态资源请求，例如:页面引入了 js/jquery.js，那么利用这个配置，就不会把页面引入的文件当作请求了 -->
+    <mvc:default-servlet-handler/>
+
+    <!-- 配置视图解析器 -->
+    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <!-- 前缀 -->
+        <property name="prefix" value="/"></property>
+        <!-- 后缀 -->
+        <property name="suffix" value=".jsp"></property>
+    </bean>
+
+    <!--
+		如果项目中拥有jackson.jar，那么springMvc会借助@ResponseBody将返回结果自动转换为json，如果项目没有jackson.jar
+		如果项目用的fastjson.jar，那么需要特殊配置以下
+		利用jastjson.jar，将@ResponseBody返回结果自动转换为json
+	-->
+    <mvc:annotation-driven>
+        <!-- 安装FastJson,转换器 -->
+        <mvc:message-converters>
+            <bean class="com.alibaba.fastjson.support.spring.FastJsonHttpMessageConverter">
+                <!-- 声明转换类型:json -->
+                <property name="supportedMediaTypes">
+                    <list>
+                        <value>application/json</value>
+                    </list>
+                </property>
+            </bean>
+        </mvc:message-converters>
+    </mvc:annotation-driven>
+
+    <!-- 上传/下载解析器 id必须是：“multipartResolver”-->
+    <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <!-- 最大可上传的文件大小  单位：byte  超出后会抛出MaxUploadSizeExceededException异常，可以异常解析器捕获 -->
+        <property name="maxUploadSize" value="104857600"></property>
+    </bean>
+</beans>

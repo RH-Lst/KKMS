@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.RH.db.dao.UserDao">
+
+    <select id="selectAllUserByLimits" resultType="com.RH.db.pojo.User">
+        select * from `User`
+    </select>
+
+    <delete id="deleteUserById" parameterType="int">
+        delete from  `User` where uid = #{uid}
+    </delete>
+
+    <delete id="deleteUserAById" parameterType="int">
+        delete from  user_authority where uid = #{uid}
+    </delete>
+
+    <update id="updateUserById" parameterType="com.RH.db.pojo.User">
+        update `User` set userName=#{userName} , sex=#{sex} where uid=#{uid}
+    </update>
+
+    <insert id="insertUser" parameterType="com.RH.db.pojo.User">
+        insert into `User` (userName,userPsd,sex,headImg,imgPath)values (#{userName},#{userPsd},#{sex},#{headImg},#{imgPath})
+    </insert>
+
+    <insert id="insertUserAuthority" parameterType="com.RH.db.pojo.User_Authority">
+        insert into user_authority (uid,aid) values (#{uid},#{aid})
+    </insert>
+
+    <select id="selectLatestId" resultType="com.RH.db.pojo.User">
+        select * from `user` order by uid desc limit 1;
+    </select>
+
+    <select id="login" parameterType="com.RH.db.pojo.User" resultType="com.RH.db.pojo.User">
+        select u.* ,a.authorityType
+        from `user` as u,user_authority as ua,authority as a
+        where
+        u.userName=#{userName} and u.userPsd=#{userPsd} and u.uid=ua.uid and ua.aid = a.aid
+    </select>
+
+
+
+    <update id="updateUserPerson" parameterType="com.RH.db.pojo.User">
+        update `User`
+        <trim prefix="set" suffixOverrides=",">
+            <if test="userName!=null and userName !='' ">userName=#{userName},</if>
+            <if test="userPsd!=null and userPsd !='' ">userPsd=#{userPsd},</if>
+            <if test="headImg!=null and headImg !='' ">headImg=#{headImg},</if>
+            <if test="imgPath!=null and imgPath !='' ">imgPath=#{imgPath},</if>
+        </trim>
+       where uid=#{uid}
+    </update>
+
+</mapper>

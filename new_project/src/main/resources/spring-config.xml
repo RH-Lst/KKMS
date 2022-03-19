@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+    <!-- spring管理这些包下的类 -->
+    <context:component-scan base-package="com.RH.controller"/>
+    <context:component-scan base-package="com.RH.service"/>
+    <context:component-scan base-package="com.RH.db.dao"/>
+    <context:component-scan base-package="com.RH.utils"/>
+
+    <!-- 读取db.propertise文件内容  -->
+    <context:property-placeholder location="classpath:db.properties"/>
+    <!-- spring管理数据源dataSource对象，数据库连接池	 -->
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+        <property name="driverClassName" value="${jdbc.driverClass}"/>
+        <property name="url" value="${jdbc.url}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+        <!--
+			数据库连接池相关配置
+ 			项目只要启动，就向数据库连接池中注入initialSize=10个链接，这些连接都是待机状态，使用时不用创建对象而是直接从连接池中取出，使用结束后也不需要关闭连接，而是重新回归池中
+		-->
+        <property name="initialSize" value="10"/>
+        <property name="minIdle" value="10"/>
+        <property name="maxActive" value="50"/>
+        <property name="maxWait" value="60000"/>
+        <property name="timeBetweenEvictionRunsMillis" value="60000"/>
+        <property name="minEvictableIdleTimeMillis" value="300000"/>
+    </bean>
+
+    <!-- 让spring管理mybatis核心对象sqlSessionFactory -->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <!-- 给sqlSessionFactory对象注入数据源dataSource属性值 -->
+        <property name="dataSource" ref="dataSource"></property>
+        <!-- 给sqlSessionFactory对象注入给实体类起别名typeAliasesPackage属性值 -->
+        <property name="typeAliasesPackage" value="com.RH.db.pojo"></property>
+        <!-- 给sqlSessionFactory对象注入注册mapper.xml映射文件mapperLocations属性值 -->
+        <property name="mapperLocations" value="classpath:com/RH/db/mapping/*.xml"></property>
+        <!-- 给sqlSessionFactory对象注入mybatis.xml核心配置文件configLocation属性值 -->
+        <property name="configLocation" value="classpath:mybatis-config.xml"/>
+    </bean>
+
+    <!-- spring管理事务	 -->
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"></property>
+    </bean>
+    <!-- 纯粹手动配置，跟任何的类、jar包都没有关系 -->
+    <tx:advice id="txAdvice" transaction-manager="transactionManager">
+        <tx:attributes>
+            <!-- 只要方法名带有delete、save、update、insert，那么这些方法就开启了事务 -->
+            <tx:method name="delete*" propagation="REQUIRED" read-only="false" rollback-for="java.lang.Exception"/>
+            <tx:method name="save*" propagation="REQUIRED" read-only="false" rollback-for="java.lang.Exception"/>
+            <tx:method name="insert*" propagation="REQUIRED" read-only="false" rollback-for="java.lang.Exception"/>
+            <tx:method name="update*" propagation="REQUIRED" read-only="false" rollback-for="java.lang.Exception"/>
+            <!-- 只要方法名带有load、find、search、select、get，那么这些方法就不会开启事务 -->
+            <tx:method name="load*" propagation="SUPPORTS" read-only="true"/>
+            <tx:method name="find*" propagation="SUPPORTS" read-only="true"/>
+            <tx:method name="search*" propagation="SUPPORTS" read-only="true"/>
+            <tx:method name="select*" propagation="SUPPORTS" read-only="true"/>
+            <tx:method name="get*" propagation="SUPPORTS" read-only="true"/>
+        </tx:attributes>
+    </tx:advice>
+
+    <!--
+        因为dao层下所有的文件都是接口，接口的方法没有方法体，所以当数据请求结束后，dao接口方法无法提交或回滚事务
+        需要让service层的方法调用dao接口的方法，然后对事务进行提交或回滚
+
+        所以，利用面向切面编程将所有事务的管理，配置到service包下的所有类的所有方法中，只要方法名带有delete、save、update、insert，就会对事务自行处理
+     -->
+    <aop:config>
+        <aop:pointcut id="serviceMethods" expression="execution(* com.RH.service.*.*(..))" />
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="serviceMethods"/>
+    </aop:config>
+
+    <!-- 只有配置了以下内容后，才可以在Dao层接口上使用@Repository注解 -->
+    <bean id="mapperScannerConfigurer" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.RH.db.dao"></property>
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"></property>
+    </bean>
+
+
+</beans>

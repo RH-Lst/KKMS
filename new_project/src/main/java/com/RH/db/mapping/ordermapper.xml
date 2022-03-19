@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.RH.db.dao.OrderDao">
+
+    <insert id="insertOrder" parameterType="com.RH.db.pojo.Order">
+        insert into `order` (uid,userName) values (#{uid},#{userName});
+    </insert>
+
+    <select id="selectLatestId" resultType="com.RH.db.pojo.Order">
+        select * from `order` order by oid desc limit 1;
+    </select>
+
+    <insert id="insertOrderDetis" parameterType="com.RH.db.pojo.Order_Detils">
+        insert into order_detils (oid,fid,foodName,foodPrice,orderNum) values (#{oid},#{fid},#{foodName},#{foodPrice},#{orderNum});
+    </insert>
+
+    <update id="updateOrder" parameterType="com.RH.db.pojo.Order">
+        update `order` set totalMoney=#{totalMoney} where oid = #{oid}
+    </update>
+
+    <select id="selectOrderByLimits" resultType="com.RH.db.pojo.Order_Detils">
+        select o.*,od.* from `order` as o , order_detils as od where o.oid = od.oid
+    </select>
+</mapper>

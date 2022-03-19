@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.RH.db.dao.FoodDao">
+    <select id="selectAllFoodByLimits" resultType="com.RH.db.pojo.Food">
+        select f.*,t.foodType,t.tid
+        from Food as f, `type` as t, food_type as ft
+        where f.fid=ft.fid and ft.tid=t.tid
+    </select>
+
+    <delete id="deleteFoodById" parameterType="int">
+        delete from Food where fid=#{fid}
+    </delete>
+
+    <delete id="deleteFoodTById" parameterType="int">
+        delete from food_type where fid=#{fid}
+    </delete>
+
+    <select id="selectFoodTyprByLimits" resultType="com.RH.db.pojo.Food_Type">
+        select * from `type`
+    </select>
+
+    <update id="updateFood" parameterType="com.RH.db.pojo.Food">
+        update Food set foodName = #{foodName} , foodDescription = #{foodDescription} , foodPrice = #{foodPrice} where fid = #{fid}
+    </update>
+
+    <update id="updateFoodtype" parameterType="com.RH.db.pojo.Food">
+        update Food_Type set tid = #{tid} where fid = #{fid}
+    </update>
+
+    <insert id="insertFood" parameterType="com.RH.db.pojo.Food">
+        insert into Food (foodName,foodDescription,foodPrice,foodImg,FoodImgPath) values (#{foodName},#{foodDescription},#{foodPrice},#{foodImg},#{foodImgPath});
+    </insert>
+    
+    <insert id="insertFoodType" parameterType="com.RH.db.pojo.Food">
+        insert into food_type (fid,tid) values (#{fid},#{tid});
+    </insert>
+
+    <select id="selectLatestId" resultType="com.RH.db.pojo.Food">
+        select * from food order by fid desc limit 1;
+    </select>
+</mapper>
+
+
